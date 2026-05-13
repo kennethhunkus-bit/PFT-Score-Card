@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a2240">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PFT Calc">
+<meta name="description" content="Unofficial USCG Physical Fitness Test score calculator. Works offline.">
+<link rel="manifest" href="manifest.json">
+<title>USCG PFT Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+
+:root {
+  --navy-dark: #0a2240;
+  --navy: #1a3a5c;
+  --navy-light: #2a5298;
+  --red: #C8102E;
+  --red-light: #e8334a;
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface-alt: #f7f8fc;
+  --border: #d4d9e8;
+  --text: #1a1f2e;
+  --text-sec: #4a5568;
+  --text-muted: #8a95a8;
+  --success: #155e34;
+  --success-bg: #e6f4ec;
+  --success-border: #9dd4b4;
+  --danger: #9b1c1c;
+  --danger-bg: #fde8e8;
+  --danger-border: #f0aaaa;
+  --warn: #7a4a00;
+  --warn-bg: #fff8e6;
+  --warn-border: #f5d07a;
+  --info: #1a4a8a;
+  --info-bg: #e8f0fa;
+  --info-border: #9ab8e8;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: var(--navy-dark);
+  border-bottom: 3px solid var(--red);
+  padding: 14px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-badge {
+  width: 42px; height: 42px;
+  background: var(--red);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.header-text h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+.header-text p {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+  font-weight: 400;
+}
+
+/* ── TABS ── */
+.tab-bar {
+  display: flex;
+  background: var(--navy-dark);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.tab-btn {
+  flex: 1;
+  padding: 10px 4px 8px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab-btn.active {
+  color: #fff;
+  border-bottom-color: var(--red);
+}
+
+/* ── SCROLL CONTAINER ── */
+.tab-panel { display: none; flex: 1; overflow-y: auto; padding: 14px 14px 90px; }
+.tab-panel.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--navy);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.card-title::before {
+  content: '';
+  display: block;
+  width: 3px; height: 16px;
+  background: var(--red);
+  border-radius: 2px;
+}
+
+/* ── SEGMENT CONTROL ── */
+.seg {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.seg button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: var(--surface);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-sec);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.seg button.active { background: var(--navy-dark); color: #fff; font-weight: 600; }
+
+/* ── FIELD LABELS ── */
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.field-hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── SELECT / INPUT ── */
+select, .num-input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+}
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a95a8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+/* ── CARDIO BUTTON GRID ── */
+.cardio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 0;
+}
+.cardio-btn {
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-sec);
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+  line-height: 1.3;
+}
+.cardio-btn.active { background: var(--navy-dark); border-color: var(--navy-dark); color: #fff; font-weight: 600; }
+
+/* ── EVENT ROWS ── */
+.event-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.event-row:last-child { border-bottom: none; padding-bottom: 0; }
+.event-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.event-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.event-input-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.time-part {
+  width: 52px; height: 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+}
+.time-sep { font-size: 18px; font-weight: 700; color: var(--text-muted); }
+.count-input {
+  width: 72px; height: 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+}
+input:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(42,82,152,0.12); }
+
+/* ── SCORE CARDS ROW ── */
+.score-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.score-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 8px;
+  text-align: center;
+  transition: background .2s, border-color .2s;
+}
+.score-card.pass { background: var(--success-bg); border-color: var(--success-border); }
+.score-card.fail { background: var(--danger-bg); border-color: var(--danger-border); }
+.score-card .sc-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.score-card .sc-raw {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.score-card .sc-pts {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+.score-card.pass .sc-pts { color: var(--success); font-weight: 600; }
+.score-card.fail .sc-pts { color: var(--danger); font-weight: 600; }
+.sc-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+.pass .sc-badge { background: var(--success); color: #fff; }
+.fail .sc-badge { background: var(--danger); color: #fff; }
+
+/* ── OVERALL RESULT ── */
+.result-band {
+  border-radius: var(--r-lg);
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+.result-band.r-pass-superior { background: var(--success-bg); border-color: var(--success-border); }
+.result-band.r-pass-excellent { background: var(--info-bg); border-color: var(--info-border); }
+.result-band.r-pass-above { background: var(--info-bg); border-color: var(--info-border); }
+.result-band.r-pass-average { background: var(--warn-bg); border-color: var(--warn-border); }
+.result-band.r-fail { background: var(--danger-bg); border-color: var(--danger-border); }
+.result-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.result-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+.r-pass-superior .result-title { color: var(--success); }
+.r-pass-excellent .result-title { color: var(--info); }
+.r-pass-above .result-title { color: var(--info); }
+.r-pass-average .result-title { color: var(--warn); }
+.r-fail .result-title { color: var(--danger); }
+.result-mark {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--navy-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+.result-sub { font-size: 13px; color: var(--text-sec); }
+
+/* ── RESET BTN ── */
+.reset-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-sec);
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background .15s;
+}
+.reset-btn:active { background: var(--surface-alt); }
+
+/* ── STANDARDS TABLE ── */
+.table-scroll { overflow-x: auto; border-radius: var(--r-md); border: 1px solid var(--border); margin-bottom: 8px; }
+.std-table { border-collapse: collapse; width: 100%; min-width: 440px; }
+.std-table th {
+  background: var(--navy-dark);
+  color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  text-align: center;
+  white-space: nowrap;
+}
+.std-table td {
+  padding: 8px 10px;
+  font-size: 13px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.std-table tr:nth-child(even) td { background: var(--surface-alt); }
+.std-table tr.min-row td { background: var(--danger-bg); color: var(--danger); font-weight: 700; }
+.std-table tr:last-child td { border-bottom: none; }
+.table-note { font-size: 11px; color: var(--text-muted); padding: 0 4px 4px; }
+
+/* ── EVAL MARKS TABLE ── */
+.marks-table { width: 100%; border-collapse: collapse; }
+.marks-table tr { border-bottom: 1px solid var(--border); }
+.marks-table tr:last-child { border-bottom: none; }
+.marks-table td { padding: 8px 4px; font-size: 13px; }
+.marks-table .mk { font-weight: 700; color: var(--navy); font-family: 'Barlow Condensed', sans-serif; font-size: 15px; }
+.marks-table .rg { color: var(--text-sec); text-align: right; }
+
+/* ── ACCORDION ── */
+.accordion { margin-bottom: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.acc-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: left;
+}
+.acc-chevron { font-size: 11px; color: var(--text-muted); transition: transform .2s; }
+.acc-header.open .acc-chevron { transform: rotate(180deg); }
+.acc-body { display: none; padding: 0 16px 14px; }
+.acc-body.open { display: block; }
+.acc-item { padding: 10px 0; border-top: 1px solid var(--border); }
+.acc-item-heading { font-size: 13px; font-weight: 700; color: var(--navy-light); margin-bottom: 4px; }
+.acc-item-body { font-size: 13px; color: var(--text-sec); line-height: 1.55; }
+
+.disclaimer {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--warn);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+/* ── INSTALL BANNER ── */
+#install-banner {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--navy-dark);
+  border-top: 2px solid var(--red);
+  padding: 12px 16px;
+  z-index: 200;
+  align-items: center;
+  gap: 12px;
+}
+#install-banner p { color: rgba(255,255,255,0.85); font-size: 13px; flex: 1; }
+#install-banner button {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 8px 16px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#dismiss-banner {
+  background: none !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  padding: 8px 10px !important;
+}
+
+@media (max-width: 380px) {
+  .score-card .sc-raw { font-size: 18px; }
+  .cardio-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-badge">⚓</div>
+  <div class="header-text">
+    <h1>USCG PFT CALCULATOR</h1>
+    <p>Physical Readiness Program · 26 MAR 2026</p>
+  </div>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('calc',this)">Calculator</button>
+  <button class="tab-btn" onclick="showTab('standards',this)">Standards</button>
+  <button class="tab-btn" onclick="showTab('info',this)">PFT Rules</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════ CALCULATOR TAB -->
+<div id="tab-calc" class="tab-panel active">
+
+  <div class="card">
+    <div class="card-title">Member Info</div>
+
+    <div class="field-label">Sex</div>
+    <div class="seg" style="margin-bottom:14px">
+      <button class="active" onclick="setSex('M',this)">Male</button>
+      <button onclick="setSex('F',this)">Female</button>
+    </div>
+
+    <div class="field-label">Age Group</div>
+    <select id="age-select" onchange="calc()">
+      <option value="17-19">17 – 19</option>
+      <option value="20-24">20 – 24</option>
+      <option value="25-29" selected>25 – 29</option>
+      <option value="30-34">30 – 34</option>
+      <option value="35-39">35 – 39</option>
+      <option value="40-44">40 – 44</option>
+      <option value="45-49">45 – 49</option>
+      <option value="50-54">50 – 54</option>
+      <option value="55-59">55 – 59</option>
+      <option value="60-64">60 – 64</option>
+      <option value="65+">65+</option>
+    </select>
+
+    <div class="field-label" style="margin-top:14px">Cardio Event</div>
+    <div class="cardio-grid">
+      <button class="cardio-btn active" onclick="setCardio('run',this)">1.5-Mile Run/Walk</button>
+      <button class="cardio-btn" onclick="setCardio('row',this)">2000-Meter Row</button>
+      <button class="cardio-btn" onclick="setCardio('swim500',this)">500-Yard Swim</button>
+      <button class="cardio-btn" onclick="setCardio('swim450',this)">450-Meter Swim</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Event Scores</div>
+
+    <div class="event-row">
+      <div>
+        <div class="event-name">Push-Ups</div>
+        <div class="event-sub">max reps in 1 min</div>
+      </div>
+      <input class="count-input" id="pu-val" type="number" inputmode="numeric" min="0" max="200" placeholder="—" oninput="calc()">
+    </div>
+
+    <div class="event-row">
+      <div>
+        <div class="event-name">Forearm Plank</div>
+        <div class="event-sub">hold time (max scored: 3:24)</div>
+      </div>
+      <div class="event-input-wrap">
+        <input class="time-part" id="pl-min" type="number" inputmode="numeric" min="0" max="4" placeholder="m" oninput="autoAdvance(this,'pl-sec');calc()">
+        <span class="time-sep">:</span>
+        <input class="time-part" id="pl-sec" type="number" inputmode="numeric" min="0" max="59" placeholder="ss" oninput="calc()">
+      </div>
+    </div>
+
+    <div class="event-row">
+      <div>
+        <div class="event-name" id="cardio-label">1.5-Mile Run/Walk</div>
+        <div class="event-sub">fastest time</div>
+      </div>
+      <div class="event-input-wrap">
+        <input class="time-part" id="cr-min" type="number" inputmode="numeric" min="0" max="59" placeholder="m" oninput="autoAdvance(this,'cr-sec');calc()">
+        <span class="time-sep">:</span>
+        <input class="time-part" id="cr-sec" type="number" inputmode="numeric" min="0" max="59" placeholder="ss" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Score summary cards -->
+  <div class="score-row">
+    <div class="score-card" id="sc-pu">
+      <div class="sc-label">Push-Up</div>
+      <div class="sc-raw" id="sc-pu-raw">—</div>
+      <div class="sc-pts" id="sc-pu-pts">enter</div>
+    </div>
+    <div class="score-card" id="sc-pl">
+      <div class="sc-label">Plank</div>
+      <div class="sc-raw" id="sc-pl-raw">—</div>
+      <div class="sc-pts" id="sc-pl-pts">enter</div>
+    </div>
+    <div class="score-card" id="sc-cr">
+      <div class="sc-label">Cardio</div>
+      <div class="sc-raw" id="sc-cr-raw">—</div>
+      <div class="sc-pts" id="sc-cr-pts">enter</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Overall Result</div>
+    <div class="result-band" id="result-band">
+      <div class="result-top">
+        <div class="result-title" id="result-title">Enter all three events</div>
+      </div>
+      <div class="result-sub" id="result-sub"></div>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ Reset Scores</button>
+</div><!-- /tab-calc -->
+
+
+<!-- ═══════════════════════════════════════════════════ STANDARDS TAB -->
+<div id="tab-standards" class="tab-panel">
+
+  <div class="card" style="padding-bottom:12px">
+    <div class="seg" style="margin-bottom:10px">
+      <button class="active" id="std-sex-m" onclick="setStdSex('M',this)">Male</button>
+      <button id="std-sex-f" onclick="setStdSex('F',this)">Female</button>
+    </div>
+    <select id="std-age" onchange="renderTable()">
+      <option value="17-19">Age 17–19</option>
+      <option value="20-24">Age 20–24</option>
+      <option value="25-29" selected>Age 25–29</option>
+      <option value="30-34">Age 30–34</option>
+      <option value="35-39">Age 35–39</option>
+      <option value="40-44">Age 40–44</option>
+      <option value="45-49">Age 45–49</option>
+      <option value="50-54">Age 50–54</option>
+      <option value="55-59">Age 55–59</option>
+      <option value="60-64">Age 60–64</option>
+      <option value="65+">Age 65+</option>
+    </select>
+  </div>
+
+  <div class="table-scroll">
+    <table class="std-table" id="std-table">
+      <thead>
+        <tr>
+          <th>Pts</th>
+          <th>Push-Up</th>
+          <th>Plank</th>
+          <th>Run</th>
+          <th>Row</th>
+          <th>500yd Swim</th>
+          <th>450m Swim</th>
+        </tr>
+      </thead>
+      <tbody id="std-tbody"></tbody>
+    </table>
+  </div>
+  <div class="table-note">Red row = minimum passing standard (45 pts per event required)</div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="card-title">Evaluation Marks</div>
+    <table class="marks-table">
+      <tr><td class="mk">7 – Superior</td><td class="rg">90–100 avg pts</td></tr>
+      <tr><td class="mk">6 – Excellent</td><td class="rg">75–89 avg pts</td></tr>
+      <tr><td class="mk">5 – Above Average</td><td class="rg">60–74 avg pts</td></tr>
+      <tr><td class="mk">4 – Average</td><td class="rg">45–59 avg pts</td></tr>
+      <tr><td class="mk">3 – Failure</td><td class="rg">1 event failed</td></tr>
+      <tr><td class="mk">2 – Failure</td><td class="rg">2 events failed</td></tr>
+      <tr><td class="mk">1 – Failure</td><td class="rg">3 events failed</td></tr>
+    </table>
+  </div>
+</div><!-- /tab-standards -->
+
+
+<!-- ═══════════════════════════════════════════════════ INFO TAB -->
+<div id="tab-info" class="tab-panel">
+
+  <div class="disclaimer">
+    Unofficial reference tool. Always verify against official USCG Physical Readiness Program guidance. Source: PFT Guide, 26 MAR 2026.
+  </div>
+
+  <div id="accordion-container"></div>
+</div><!-- /tab-info -->
+
+
+<!-- ═══════════════════════════════════════════════════ INSTALL BANNER -->
+<div id="install-banner">
+  <p>Add to home screen for offline access</p>
+  <button id="dismiss-banner" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
+  <button id="install-btn">Install</button>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+function s(str) {
+  const [m, sec] = str.split(':').map(Number);
+  return m * 60 + sec;
+}
+function fmtSec(sec) {
+  const m = Math.floor(sec / 60);
+  const ss = sec % 60;
+  return m + ':' + String(ss).padStart(2, '0');
+}
+
+const STANDARDS = {
+  M: {
+    '17-19': [{pu:67,pl:s('3:24'),run:s('8:15'),row:s('7:00'),s500:s('6:30'),s450:s('6:20'),pts:100},{pu:62,pl:s('3:19'),run:s('8:45'),row:s('7:10'),s500:s('6:45'),s450:s('6:35'),pts:95},{pu:57,pl:s('3:14'),run:s('9:00'),row:s('7:20'),s500:s('7:15'),s450:s('7:05'),pts:90},{pu:52,pl:s('3:04'),run:s('9:15'),row:s('7:30'),s500:s('7:45'),s450:s('7:35'),pts:85},{pu:47,pl:s('2:53'),run:s('9:30'),row:s('7:40'),s500:s('8:15'),s450:s('8:05'),pts:80},{pu:44,pl:s('2:43'),run:s('9:45'),row:s('7:50'),s500:s('8:30'),s450:s('8:20'),pts:75},{pu:41,pl:s('2:23'),run:s('10:00'),row:s('8:10'),s500:s('9:15'),s450:s('9:05'),pts:70},{pu:39,pl:s('2:02'),run:s('10:30'),row:s('8:30'),s500:s('10:30'),s450:s('10:20'),pts:65},{pu:37,pl:s('1:42'),run:s('11:00'),row:s('8:50'),s500:s('11:15'),s450:s('11:05'),pts:60},{pu:35,pl:s('1:32'),run:s('12:00'),row:s('9:00'),s500:s('11:45'),s450:s('11:35'),pts:55},{pu:33,pl:s('1:22'),run:s('12:15'),row:s('9:10'),s500:s('12:15'),s450:s('12:05'),pts:50},{pu:30,pl:s('1:11'),run:s('12:45'),row:s('9:20'),s500:s('12:45'),s450:s('12:35'),pts:45}],
+    '20-24': [{pu:67,pl:s('3:20'),run:s('8:30'),row:s('7:05'),s500:s('6:30'),s450:s('6:20'),pts:100},{pu:62,pl:s('3:15'),run:s('9:00'),row:s('7:15'),s500:s('7:00'),s450:s('6:50'),pts:95},{pu:57,pl:s('3:10'),run:s('9:15'),row:s('7:25'),s500:s('7:30'),s450:s('7:20'),pts:90},{pu:52,pl:s('3:00'),run:s('9:45'),row:s('7:35'),s500:s('8:00'),s450:s('7:50'),pts:85},{pu:47,pl:s('2:50'),run:s('10:00'),row:s('7:45'),s500:s('8:15'),s450:s('8:05'),pts:80},{pu:44,pl:s('2:40'),run:s('10:30'),row:s('7:55'),s500:s('8:45'),s450:s('8:35'),pts:75},{pu:41,pl:s('2:20'),run:s('10:45'),row:s('8:15'),s500:s('9:30'),s450:s('9:20'),pts:70},{pu:39,pl:s('2:00'),run:s('11:30'),row:s('8:35'),s500:s('10:30'),s450:s('10:20'),pts:65},{pu:37,pl:s('1:40'),run:s('12:00'),row:s('8:55'),s500:s('11:30'),s450:s('11:20'),pts:60},{pu:35,pl:s('1:30'),run:s('12:45'),row:s('9:05'),s500:s('12:00'),s450:s('11:50'),pts:55},{pu:33,pl:s('1:20'),run:s('13:15'),row:s('9:15'),s500:s('12:15'),s450:s('12:05'),pts:50},{pu:30,pl:s('1:10'),run:s('13:30'),row:s('9:25'),s500:s('13:00'),s450:s('12:50'),pts:45}],
+    '25-29': [{pu:62,pl:s('3:16'),run:s('8:55'),row:s('7:10'),s500:s('6:38'),s450:s('6:28'),pts:100},{pu:59,pl:s('3:11'),run:s('9:23'),row:s('7:20'),s500:s('7:08'),s450:s('6:58'),pts:95},{pu:54,pl:s('3:06'),run:s('9:38'),row:s('7:30'),s500:s('7:38'),s450:s('7:28'),pts:90},{pu:48,pl:s('2:56'),run:s('10:15'),row:s('7:40'),s500:s('8:08'),s450:s('7:58'),pts:85},{pu:44,pl:s('2:47'),run:s('10:30'),row:s('7:50'),s500:s('8:23'),s450:s('8:13'),pts:80},{pu:41,pl:s('2:37'),run:s('10:52'),row:s('8:00'),s500:s('8:53'),s450:s('8:43'),pts:75},{pu:38,pl:s('2:17'),run:s('11:23'),row:s('8:20'),s500:s('9:38'),s450:s('9:28'),pts:70},{pu:36,pl:s('1:58'),run:s('12:15'),row:s('8:40'),s500:s('10:38'),s450:s('10:28'),pts:65},{pu:34,pl:s('1:38'),run:s('12:53'),row:s('9:00'),s500:s('11:38'),s450:s('11:28'),pts:60},{pu:32,pl:s('1:28'),run:s('13:23'),row:s('9:10'),s500:s('12:08'),s450:s('11:58'),pts:55},{pu:30,pl:s('1:18'),run:s('13:45'),row:s('9:20'),s500:s('12:23'),s450:s('12:13'),pts:50},{pu:27,pl:s('1:09'),run:s('14:00'),row:s('9:30'),s500:s('13:08'),s450:s('12:58'),pts:45}],
+    '30-34': [{pu:57,pl:s('3:12'),run:s('9:20'),row:s('7:15'),s500:s('6:45'),s450:s('6:35'),pts:100},{pu:52,pl:s('3:07'),run:s('9:45'),row:s('7:25'),s500:s('7:15'),s450:s('7:05'),pts:95},{pu:46,pl:s('3:02'),run:s('10:00'),row:s('7:35'),s500:s('7:45'),s450:s('7:35'),pts:90},{pu:41,pl:s('2:53'),run:s('10:30'),row:s('7:45'),s500:s('8:15'),s450:s('8:05'),pts:85},{pu:39,pl:s('2:43'),run:s('11:00'),row:s('7:55'),s500:s('8:30'),s450:s('8:20'),pts:80},{pu:36,pl:s('2:34'),run:s('11:15'),row:s('8:05'),s500:s('9:00'),s450:s('8:50'),pts:75},{pu:34,pl:s('2:14'),run:s('12:00'),row:s('8:25'),s500:s('9:45'),s450:s('9:35'),pts:70},{pu:31,pl:s('1:55'),run:s('13:00'),row:s('8:45'),s500:s('10:45'),s450:s('10:35'),pts:65},{pu:30,pl:s('1:36'),run:s('13:45'),row:s('9:05'),s500:s('11:45'),s450:s('11:35'),pts:60},{pu:29,pl:s('1:26'),run:s('14:00'),row:s('9:15'),s500:s('12:15'),s450:s('12:05'),pts:55},{pu:27,pl:s('1:17'),run:s('14:15'),row:s('9:25'),s500:s('12:30'),s450:s('12:20'),pts:50},{pu:24,pl:s('1:07'),run:s('14:30'),row:s('9:35'),s500:s('13:15'),s450:s('13:05'),pts:45}],
+    '35-39': [{pu:51,pl:s('3:08'),run:s('9:25'),row:s('7:20'),s500:s('6:53'),s450:s('6:43'),pts:100},{pu:49,pl:s('3:04'),run:s('9:53'),row:s('7:30'),s500:s('7:23'),s450:s('7:13'),pts:95},{pu:43,pl:s('2:59'),run:s('10:08'),row:s('7:40'),s500:s('7:53'),s450:s('7:43'),pts:90},{pu:38,pl:s('2:49'),run:s('10:38'),row:s('7:50'),s500:s('8:23'),s450:s('8:13'),pts:85},{pu:36,pl:s('2:40'),run:s('11:08'),row:s('8:00'),s500:s('8:38'),s450:s('8:28'),pts:80},{pu:33,pl:s('2:31'),run:s('11:23'),row:s('8:10'),s500:s('9:08'),s450:s('8:58'),pts:75},{pu:31,pl:s('2:12'),run:s('12:23'),row:s('8:30'),s500:s('9:53'),s450:s('9:43'),pts:70},{pu:28,pl:s('1:53'),run:s('13:23'),row:s('8:50'),s500:s('10:53'),s450:s('10:43'),pts:65},{pu:27,pl:s('1:34'),run:s('14:08'),row:s('9:10'),s500:s('11:53'),s450:s('11:43'),pts:60},{pu:26,pl:s('1:25'),run:s('14:23'),row:s('9:20'),s500:s('12:23'),s450:s('12:13'),pts:55},{pu:24,pl:s('1:15'),run:s('14:45'),row:s('9:30'),s500:s('12:38'),s450:s('12:28'),pts:50},{pu:21,pl:s('1:06'),run:s('15:00'),row:s('9:40'),s500:s('13:23'),s450:s('13:13'),pts:45}],
+    '40-44': [{pu:44,pl:s('3:04'),run:s('9:30'),row:s('7:25'),s500:s('7:00'),s450:s('6:50'),pts:100},{pu:40,pl:s('3:00'),run:s('10:00'),row:s('7:35'),s500:s('7:30'),s450:s('7:20'),pts:95},{pu:36,pl:s('2:55'),run:s('10:15'),row:s('7:45'),s500:s('8:00'),s450:s('7:50'),pts:90},{pu:34,pl:s('2:46'),run:s('10:45'),row:s('7:55'),s500:s('8:30'),s450:s('8:20'),pts:85},{pu:30,pl:s('2:37'),run:s('11:15'),row:s('8:05'),s500:s('8:45'),s450:s('8:35'),pts:80},{pu:29,pl:s('2:28'),run:s('11:45'),row:s('8:15'),s500:s('9:15'),s450:s('9:05'),pts:75},{pu:26,pl:s('2:09'),run:s('12:45'),row:s('8:35'),s500:s('10:00'),s450:s('9:50'),pts:70},{pu:25,pl:s('1:51'),run:s('13:45'),row:s('8:55'),s500:s('11:00'),s450:s('10:50'),pts:65},{pu:24,pl:s('1:32'),run:s('14:30'),row:s('9:15'),s500:s('12:00'),s450:s('11:50'),pts:60},{pu:22,pl:s('1:23'),run:s('14:45'),row:s('9:25'),s500:s('12:30'),s450:s('12:20'),pts:55},{pu:21,pl:s('1:14'),run:s('15:15'),row:s('9:35'),s500:s('12:45'),s450:s('12:35'),pts:50},{pu:18,pl:s('1:05'),run:s('15:30'),row:s('9:45'),s500:s('13:30'),s450:s('13:20'),pts:45}],
+    '45-49': [{pu:44,pl:s('3:01'),run:s('9:33'),row:s('7:30'),s500:s('7:08'),s450:s('6:58'),pts:100},{pu:39,pl:s('2:56'),run:s('10:08'),row:s('7:40'),s500:s('7:38'),s450:s('7:28'),pts:95},{pu:35,pl:s('2:52'),run:s('10:30'),row:s('7:50'),s500:s('8:08'),s450:s('7:58'),pts:90},{pu:33,pl:s('2:43'),run:s('11:08'),row:s('8:00'),s500:s('8:38'),s450:s('8:28'),pts:85},{pu:29,pl:s('2:34'),run:s('11:38'),row:s('8:10'),s500:s('8:53'),s450:s('8:43'),pts:80},{pu:28,pl:s('2:25'),run:s('12:08'),row:s('8:20'),s500:s('9:23'),s450:s('9:13'),pts:75},{pu:25,pl:s('2:07'),run:s('13:00'),row:s('8:40'),s500:s('10:08'),s450:s('9:58'),pts:70},{pu:24,pl:s('1:48'),run:s('14:08'),row:s('9:00'),s500:s('11:08'),s450:s('10:58'),pts:65},{pu:22,pl:s('1:30'),run:s('14:53'),row:s('9:20'),s500:s('12:08'),s450:s('11:58'),pts:60},{pu:20,pl:s('1:21'),run:s('15:15'),row:s('9:30'),s500:s('12:38'),s450:s('12:28'),pts:55},{pu:18,pl:s('1:12'),run:s('15:45'),row:s('9:40'),s500:s('12:53'),s450:s('12:43'),pts:50},{pu:15,pl:s('1:03'),run:s('16:08'),row:s('9:50'),s500:s('13:38'),s450:s('13:28'),pts:45}],
+    '50-54': [{pu:36,pl:s('2:57'),run:s('9:35'),row:s('7:35'),s500:s('7:15'),s450:s('7:05'),pts:100},{pu:33,pl:s('2:53'),run:s('10:15'),row:s('7:45'),s500:s('7:45'),s450:s('7:35'),pts:95},{pu:29,pl:s('2:48'),run:s('10:45'),row:s('7:55'),s500:s('8:15'),s450:s('8:05'),pts:90},{pu:26,pl:s('2:39'),run:s('11:30'),row:s('8:05'),s500:s('8:45'),s450:s('8:35'),pts:85},{pu:24,pl:s('2:31'),run:s('12:00'),row:s('8:15'),s500:s('9:00'),s450:s('8:50'),pts:80},{pu:23,pl:s('2:22'),run:s('12:30'),row:s('8:25'),s500:s('9:30'),s450:s('9:20'),pts:75},{pu:22,pl:s('2:04'),run:s('13:15'),row:s('8:45'),s500:s('10:15'),s450:s('10:05'),pts:70},{pu:21,pl:s('1:46'),run:s('14:30'),row:s('9:05'),s500:s('11:15'),s450:s('11:05'),pts:65},{pu:19,pl:s('1:29'),run:s('15:15'),row:s('9:25'),s500:s('12:15'),s450:s('12:05'),pts:60},{pu:17,pl:s('1:20'),run:s('15:45'),row:s('9:35'),s500:s('12:45'),s450:s('12:35'),pts:55},{pu:15,pl:s('1:11'),run:s('16:15'),row:s('9:45'),s500:s('13:00'),s450:s('12:50'),pts:50},{pu:12,pl:s('1:02'),run:s('16:45'),row:s('9:55'),s500:s('13:45'),s450:s('13:35'),pts:45}],
+    '55-59': [{pu:33,pl:s('2:54'),run:s('10:42'),row:s('7:40'),s500:s('7:17'),s450:s('7:07'),pts:100},{pu:30,pl:s('2:49'),run:s('11:09'),row:s('7:50'),s500:s('7:47'),s450:s('7:37'),pts:95},{pu:28,pl:s('2:45'),run:s('11:25'),row:s('8:00'),s500:s('8:17'),s450:s('8:07'),pts:90},{pu:25,pl:s('2:36'),run:s('11:57'),row:s('8:10'),s500:s('8:50'),s450:s('8:40'),pts:85},{pu:23,pl:s('2:28'),run:s('12:29'),row:s('8:20'),s500:s('9:15'),s450:s('9:05'),pts:80},{pu:22,pl:s('2:19'),run:s('13:12'),row:s('8:30'),s500:s('9:47'),s450:s('9:37'),pts:75},{pu:21,pl:s('2:02'),run:s('14:13'),row:s('8:50'),s500:s('10:40'),s450:s('10:30'),pts:70},{pu:20,pl:s('1:44'),run:s('15:14'),row:s('9:10'),s500:s('11:35'),s450:s('11:25'),pts:65},{pu:18,pl:s('1:27'),run:s('16:15'),row:s('9:30'),s500:s('12:33'),s450:s('12:23'),pts:60},{pu:16,pl:s('1:18'),run:s('16:33'),row:s('9:40'),s500:s('13:00'),s450:s('12:50'),pts:55},{pu:15,pl:s('1:09'),run:s('16:51'),row:s('9:50'),s500:s('13:25'),s450:s('13:15'),pts:50},{pu:12,pl:s('1:01'),run:s('17:09'),row:s('10:00'),s500:s('13:55'),s450:s('13:45'),pts:45}],
+    '60-64': [{pu:30,pl:s('2:50'),run:s('11:21'),row:s('7:45'),s500:s('7:20'),s450:s('7:10'),pts:100},{pu:28,pl:s('2:46'),run:s('11:48'),row:s('7:55'),s500:s('7:50'),s450:s('7:40'),pts:95},{pu:26,pl:s('2:42'),run:s('12:04'),row:s('8:05'),s500:s('8:20'),s450:s('8:10'),pts:90},{pu:24,pl:s('2:33'),run:s('12:40'),row:s('8:15'),s500:s('8:55'),s450:s('8:45'),pts:85},{pu:23,pl:s('2:25'),run:s('13:16'),row:s('8:25'),s500:s('9:30'),s450:s('9:20'),pts:80},{pu:22,pl:s('2:16'),run:s('13:53'),row:s('8:35'),s500:s('10:05'),s450:s('9:55'),pts:75},{pu:21,pl:s('1:59'),run:s('15:00'),row:s('8:55'),s500:s('11:00'),s450:s('10:50'),pts:70},{pu:20,pl:s('1:42'),run:s('16:07'),row:s('9:15'),s500:s('11:55'),s450:s('11:45'),pts:65},{pu:18,pl:s('1:25'),run:s('17:14'),row:s('9:35'),s500:s('12:50'),s450:s('12:40'),pts:60},{pu:16,pl:s('1:17'),run:s('17:47'),row:s('9:45'),s500:s('13:15'),s450:s('13:05'),pts:55},{pu:14,pl:s('1:08'),run:s('18:20'),row:s('9:55'),s500:s('13:40'),s450:s('13:30'),pts:50},{pu:11,pl:s('1:00'),run:s('18:52'),row:s('10:05'),s500:s('14:05'),s450:s('13:55'),pts:45}],
+    '65+': [{pu:30,pl:s('2:47'),run:s('11:41'),row:s('7:50'),s500:s('7:25'),s450:s('7:15'),pts:100},{pu:28,pl:s('2:43'),run:s('12:13'),row:s('8:00'),s500:s('7:55'),s450:s('7:45'),pts:95},{pu:26,pl:s('2:38'),run:s('12:43'),row:s('8:10'),s500:s('8:25'),s450:s('8:15'),pts:90},{pu:24,pl:s('2:30'),run:s('13:20'),row:s('8:20'),s500:s('9:05'),s450:s('8:55'),pts:85},{pu:23,pl:s('2:22'),run:s('13:57'),row:s('8:30'),s500:s('9:45'),s450:s('9:35'),pts:80},{pu:22,pl:s('2:13'),run:s('14:34'),row:s('8:40'),s500:s('10:30'),s450:s('10:20'),pts:75},{pu:21,pl:s('1:57'),run:s('15:47'),row:s('9:00'),s500:s('11:25'),s450:s('11:15'),pts:70},{pu:20,pl:s('1:40'),run:s('17:00'),row:s('9:20'),s500:s('12:20'),s450:s('12:10'),pts:65},{pu:18,pl:s('1:23'),run:s('18:13'),row:s('9:40'),s500:s('13:20'),s450:s('13:10'),pts:60},{pu:16,pl:s('1:15'),run:s('19:00'),row:s('9:50'),s500:s('13:40'),s450:s('13:30'),pts:55},{pu:14,pl:s('1:07'),run:s('19:47'),row:s('10:00'),s500:s('14:00'),s450:s('13:50'),pts:50},{pu:11,pl:s('0:58'),run:s('20:35'),row:s('10:10'),s500:s('14:15'),s450:s('14:05'),pts:45}]
+  },
+  F: {
+    '17-19': [{pu:47,pl:s('3:14'),run:s('9:29'),row:s('8:00'),s500:s('6:45'),s450:s('6:35'),pts:100},{pu:42,pl:s('3:09'),run:s('11:15'),row:s('8:10'),s500:s('7:45'),s450:s('7:35'),pts:95},{pu:37,pl:s('3:04'),run:s('11:30'),row:s('8:20'),s500:s('8:30'),s450:s('8:20'),pts:90},{pu:33,pl:s('2:53'),run:s('11:45'),row:s('8:30'),s500:s('9:00'),s450:s('8:50'),pts:85},{pu:28,pl:s('2:43'),run:s('12:00'),row:s('8:40'),s500:s('9:30'),s450:s('9:20'),pts:80},{pu:27,pl:s('2:33'),run:s('12:30'),row:s('8:50'),s500:s('9:45'),s450:s('9:35'),pts:75},{pu:24,pl:s('2:13'),run:s('12:45'),row:s('9:10'),s500:s('10:45'),s450:s('10:35'),pts:70},{pu:23,pl:s('1:52'),run:s('13:00'),row:s('9:40'),s500:s('12:00'),s450:s('11:50'),pts:65},{pu:21,pl:s('1:32'),run:s('13:30'),row:s('10:10'),s500:s('13:00'),s450:s('12:50'),pts:60},{pu:19,pl:s('1:22'),run:s('14:15'),row:s('10:20'),s500:s('13:15'),s450:s('13:05'),pts:55},{pu:18,pl:s('1:11'),run:s('14:45'),row:s('10:30'),s500:s('13:45'),s450:s('13:35'),pts:50},{pu:15,pl:s('1:01'),run:s('15:00'),row:s('10:40'),s500:s('14:15'),s450:s('14:05'),pts:45}],
+    '20-24': [{pu:47,pl:s('3:10'),run:s('9:47'),row:s('8:05'),s500:s('7:15'),s450:s('7:05'),pts:100},{pu:42,pl:s('3:05'),run:s('11:15'),row:s('8:15'),s500:s('8:00'),s450:s('7:50'),pts:95},{pu:37,pl:s('3:00'),run:s('11:30'),row:s('8:25'),s500:s('8:45'),s450:s('8:35'),pts:90},{pu:33,pl:s('2:50'),run:s('12:15'),row:s('8:35'),s500:s('9:15'),s450:s('9:05'),pts:85},{pu:28,pl:s('2:40'),run:s('12:45'),row:s('8:45'),s500:s('9:45'),s450:s('9:35'),pts:80},{pu:27,pl:s('2:30'),run:s('13:15'),row:s('8:55'),s500:s('10:00'),s450:s('9:50'),pts:75},{pu:24,pl:s('2:10'),run:s('13:30'),row:s('9:15'),s500:s('11:00'),s450:s('10:50'),pts:70},{pu:23,pl:s('1:50'),run:s('13:45'),row:s('9:45'),s500:s('12:15'),s450:s('12:05'),pts:65},{pu:21,pl:s('1:30'),run:s('14:15'),row:s('10:15'),s500:s('13:15'),s450:s('13:05'),pts:60},{pu:19,pl:s('1:20'),run:s('15:00'),row:s('10:25'),s500:s('13:45'),s450:s('13:35'),pts:55},{pu:18,pl:s('1:10'),run:s('15:15'),row:s('10:35'),s500:s('14:00'),s450:s('13:50'),pts:50},{pu:15,pl:s('1:00'),run:s('15:30'),row:s('10:45'),s500:s('14:30'),s450:s('14:20'),pts:45}],
+    '25-29': [{pu:47,pl:s('3:06'),run:s('10:17'),row:s('8:10'),s500:s('7:23'),s450:s('7:13'),pts:100},{pu:42,pl:s('3:01'),run:s('11:30'),row:s('8:20'),s500:s('8:15'),s450:s('7:58'),pts:95},{pu:37,pl:s('2:56'),run:s('11:45'),row:s('8:30'),s500:s('9:00'),s450:s('8:50'),pts:90},{pu:33,pl:s('2:47'),run:s('12:30'),row:s('8:40'),s500:s('9:30'),s450:s('9:20'),pts:85},{pu:28,pl:s('2:37'),run:s('13:00'),row:s('8:50'),s500:s('10:00'),s450:s('9:50'),pts:80},{pu:27,pl:s('2:27'),run:s('13:23'),row:s('9:00'),s500:s('10:15'),s450:s('10:05'),pts:75},{pu:24,pl:s('2:07'),run:s('14:00'),row:s('9:20'),s500:s('11:15'),s450:s('11:05'),pts:70},{pu:23,pl:s('1:48'),run:s('14:30'),row:s('9:50'),s500:s('12:30'),s450:s('12:20'),pts:65},{pu:21,pl:s('1:28'),run:s('14:53'),row:s('10:20'),s500:s('13:30'),s450:s('13:20'),pts:60},{pu:19,pl:s('1:18'),run:s('15:23'),row:s('10:30'),s500:s('13:53'),s450:s('13:43'),pts:55},{pu:17,pl:s('1:09'),run:s('15:45'),row:s('10:40'),s500:s('14:15'),s450:s('14:05'),pts:50},{pu:14,pl:s('0:59'),run:s('16:08'),row:s('10:50'),s500:s('14:45'),s450:s('14:35'),pts:45}],
+    '30-34': [{pu:46,pl:s('3:02'),run:s('10:46'),row:s('8:15'),s500:s('7:30'),s450:s('7:20'),pts:100},{pu:40,pl:s('2:58'),run:s('11:45'),row:s('8:25'),s500:s('8:30'),s450:s('8:20'),pts:95},{pu:33,pl:s('2:53'),run:s('12:00'),row:s('8:35'),s500:s('9:15'),s450:s('9:05'),pts:90},{pu:26,pl:s('2:43'),run:s('12:45'),row:s('8:45'),s500:s('9:45'),s450:s('9:35'),pts:85},{pu:23,pl:s('2:34'),run:s('13:15'),row:s('8:55'),s500:s('10:15'),s450:s('10:05'),pts:80},{pu:19,pl:s('2:24'),run:s('13:30'),row:s('9:05'),s500:s('10:30'),s450:s('10:20'),pts:75},{pu:18,pl:s('2:05'),run:s('14:30'),row:s('9:25'),s500:s('11:30'),s450:s('11:20'),pts:70},{pu:16,pl:s('1:46'),run:s('15:15'),row:s('9:55'),s500:s('12:45'),s450:s('12:35'),pts:65},{pu:15,pl:s('1:26'),run:s('15:30'),row:s('10:25'),s500:s('13:45'),s450:s('13:35'),pts:60},{pu:14,pl:s('1:17'),run:s('15:45'),row:s('10:35'),s500:s('14:00'),s450:s('13:50'),pts:55},{pu:13,pl:s('1:07'),run:s('16:15'),row:s('10:45'),s500:s('14:30'),s450:s('14:20'),pts:50},{pu:11,pl:s('0:58'),run:s('16:45'),row:s('10:55'),s500:s('15:00'),s450:s('14:50'),pts:45}],
+    '35-39': [{pu:42,pl:s('2:59'),run:s('10:51'),row:s('8:20'),s500:s('7:45'),s450:s('7:35'),pts:100},{pu:39,pl:s('2:54'),run:s('11:53'),row:s('8:30'),s500:s('8:38'),s450:s('8:28'),pts:95},{pu:32,pl:s('2:49'),run:s('12:08'),row:s('8:40'),s500:s('9:30'),s450:s('9:20'),pts:90},{pu:25,pl:s('2:40'),run:s('12:53'),row:s('8:50'),s500:s('10:00'),s450:s('9:50'),pts:85},{pu:22,pl:s('2:31'),run:s('13:23'),row:s('9:00'),s500:s('10:23'),s450:s('10:13'),pts:80},{pu:18,pl:s('2:21'),run:s('13:45'),row:s('9:10'),s500:s('10:45'),s450:s('10:35'),pts:75},{pu:17,pl:s('2:02'),run:s('14:38'),row:s('9:30'),s500:s('11:45'),s450:s('11:35'),pts:70},{pu:15,pl:s('1:44'),run:s('15:30'),row:s('10:00'),s500:s('12:53'),s450:s('12:43'),pts:65},{pu:14,pl:s('1:25'),run:s('15:53'),row:s('10:30'),s500:s('14:00'),s450:s('13:50'),pts:60},{pu:13,pl:s('1:15'),run:s('16:15'),row:s('10:40'),s500:s('14:15'),s450:s('14:05'),pts:55},{pu:12,pl:s('1:06'),run:s('16:38'),row:s('10:50'),s500:s('14:38'),s450:s('14:28'),pts:50},{pu:10,pl:s('0:56'),run:s('17:00'),row:s('11:00'),s500:s('15:15'),s450:s('15:05'),pts:45}],
+    '40-44': [{pu:38,pl:s('2:55'),run:s('10:56'),row:s('8:25'),s500:s('8:00'),s450:s('7:50'),pts:100},{pu:33,pl:s('2:51'),run:s('12:00'),row:s('8:35'),s500:s('8:45'),s450:s('8:35'),pts:95},{pu:29,pl:s('2:46'),run:s('12:15'),row:s('8:45'),s500:s('9:45'),s450:s('9:35'),pts:90},{pu:23,pl:s('2:37'),run:s('13:00'),row:s('8:55'),s500:s('10:15'),s450:s('10:05'),pts:85},{pu:18,pl:s('2:28'),run:s('13:30'),row:s('9:05'),s500:s('10:30'),s450:s('10:20'),pts:80},{pu:16,pl:s('2:18'),run:s('14:00'),row:s('9:15'),s500:s('11:00'),s450:s('10:50'),pts:75},{pu:15,pl:s('2:00'),run:s('14:45'),row:s('9:35'),s500:s('12:00'),s450:s('11:50'),pts:70},{pu:14,pl:s('1:41'),run:s('15:45'),row:s('10:05'),s500:s('13:00'),s450:s('12:50'),pts:65},{pu:13,pl:s('1:23'),run:s('16:15'),row:s('10:35'),s500:s('14:15'),s450:s('14:05'),pts:60},{pu:12,pl:s('1:14'),run:s('16:45'),row:s('10:45'),s500:s('14:30'),s450:s('14:20'),pts:55},{pu:11,pl:s('1:05'),run:s('17:00'),row:s('10:55'),s500:s('14:45'),s450:s('14:35'),pts:50},{pu:8,pl:s('0:55'),run:s('17:15'),row:s('11:05'),s500:s('15:30'),s450:s('15:20'),pts:45}],
+    '45-49': [{pu:37,pl:s('2:52'),run:s('10:58'),row:s('8:30'),s500:s('8:15'),s450:s('8:05'),pts:100},{pu:32,pl:s('2:47'),run:s('12:08'),row:s('8:40'),s500:s('9:00'),s450:s('8:50'),pts:95},{pu:27,pl:s('2:43'),run:s('12:30'),row:s('8:50'),s500:s('9:53'),s450:s('9:43'),pts:90},{pu:22,pl:s('2:34'),run:s('13:15'),row:s('9:00'),s500:s('10:23'),s450:s('10:13'),pts:85},{pu:17,pl:s('2:25'),run:s('13:45'),row:s('9:10'),s500:s('10:45'),s450:s('10:35'),pts:80},{pu:15,pl:s('2:16'),run:s('14:08'),row:s('9:20'),s500:s('11:08'),s450:s('10:58'),pts:75},{pu:14,pl:s('1:58'),run:s('15:00'),row:s('9:40'),s500:s('12:15'),s450:s('12:05'),pts:70},{pu:13,pl:s('1:39'),run:s('15:53'),row:s('10:10'),s500:s('13:15'),s450:s('13:05'),pts:65},{pu:12,pl:s('1:21'),run:s('16:30'),row:s('10:40'),s500:s('14:30'),s450:s('14:20'),pts:60},{pu:11,pl:s('1:12'),run:s('16:53'),row:s('10:50'),s500:s('14:45'),s450:s('14:35'),pts:55},{pu:10,pl:s('1:03'),run:s('17:08'),row:s('11:00'),s500:s('15:00'),s450:s('14:50'),pts:50},{pu:7,pl:s('0:54'),run:s('17:23'),row:s('11:10'),s500:s('15:38'),s450:s('15:28'),pts:45}],
+    '50-54': [{pu:35,pl:s('2:48'),run:s('11:00'),row:s('8:35'),s500:s('8:30'),s450:s('8:20'),pts:100},{pu:30,pl:s('2:44'),run:s('12:15'),row:s('8:45'),s500:s('9:15'),s450:s('9:05'),pts:95},{pu:25,pl:s('2:39'),run:s('12:45'),row:s('8:55'),s500:s('10:00'),s450:s('9:50'),pts:90},{pu:20,pl:s('2:31'),run:s('13:30'),row:s('9:05'),s500:s('10:30'),s450:s('10:20'),pts:85},{pu:15,pl:s('2:22'),run:s('14:00'),row:s('9:15'),s500:s('11:00'),s450:s('10:50'),pts:80},{pu:14,pl:s('2:13'),run:s('14:15'),row:s('9:25'),s500:s('11:15'),s450:s('11:05'),pts:75},{pu:13,pl:s('1:55'),run:s('15:15'),row:s('9:45'),s500:s('12:30'),s450:s('12:20'),pts:70},{pu:12,pl:s('1:37'),run:s('16:00'),row:s('10:15'),s500:s('13:30'),s450:s('13:20'),pts:65},{pu:11,pl:s('1:20'),run:s('16:45'),row:s('10:45'),s500:s('14:45'),s450:s('14:35'),pts:60},{pu:10,pl:s('1:11'),run:s('17:00'),row:s('10:55'),s500:s('15:00'),s450:s('14:50'),pts:55},{pu:9,pl:s('1:02'),run:s('17:15'),row:s('11:05'),s500:s('15:15'),s450:s('15:05'),pts:50},{pu:6,pl:s('0:53'),run:s('17:30'),row:s('11:15'),s500:s('15:45'),s450:s('15:35'),pts:45}],
+    '55-59': [{pu:28,pl:s('2:45'),run:s('12:23'),row:s('8:40'),s500:s('8:45'),s450:s('8:35'),pts:100},{pu:24,pl:s('2:41'),run:s('13:39'),row:s('8:50'),s500:s('9:30'),s450:s('9:20'),pts:95},{pu:22,pl:s('2:36'),run:s('13:57'),row:s('9:00'),s500:s('10:07'),s450:s('9:57'),pts:90},{pu:19,pl:s('2:28'),run:s('14:25'),row:s('9:10'),s500:s('10:37'),s450:s('10:27'),pts:85},{pu:14,pl:s('2:19'),run:s('14:53'),row:s('9:20'),s500:s('11:15'),s450:s('11:05'),pts:80},{pu:13,pl:s('2:10'),run:s('15:20'),row:s('9:30'),s500:s('11:25'),s450:s('11:15'),pts:75},{pu:12,pl:s('1:53'),run:s('16:09'),row:s('9:50'),s500:s('12:45'),s450:s('12:35'),pts:70},{pu:11,pl:s('1:35'),run:s('16:58'),row:s('10:20'),s500:s('13:45'),s450:s('13:35'),pts:65},{pu:10,pl:s('1:18'),run:s('17:48'),row:s('10:50'),s500:s('15:00'),s450:s('14:50'),pts:60},{pu:9,pl:s('1:09'),run:s('18:03'),row:s('11:00'),s500:s('15:15'),s450:s('15:05'),pts:55},{pu:8,pl:s('1:01'),run:s('18:18'),row:s('11:10'),s500:s('15:30'),s450:s('15:20'),pts:50},{pu:5,pl:s('0:52'),run:s('18:34'),row:s('11:20'),s500:s('16:00'),s450:s('15:50'),pts:45}],
+    '60-64': [{pu:21,pl:s('2:42'),run:s('13:34'),row:s('8:45'),s500:s('9:00'),s450:s('8:50'),pts:100},{pu:19,pl:s('2:37'),run:s('14:50'),row:s('8:55'),s500:s('9:45'),s450:s('9:35'),pts:95},{pu:17,pl:s('2:33'),run:s('15:08'),row:s('9:05'),s500:s('10:15'),s450:s('10:05'),pts:90},{pu:15,pl:s('2:25'),run:s('15:34'),row:s('9:15'),s500:s('10:45'),s450:s('10:35'),pts:85},{pu:14,pl:s('2:16'),run:s('16:00'),row:s('9:25'),s500:s('11:30'),s450:s('11:20'),pts:80},{pu:13,pl:s('2:08'),run:s('16:25'),row:s('9:35'),s500:s('11:35'),s450:s('11:25'),pts:75},{pu:12,pl:s('1:51'),run:s('17:17'),row:s('9:55'),s500:s('13:00'),s450:s('12:50'),pts:70},{pu:11,pl:s('1:34'),run:s('18:06'),row:s('10:25'),s500:s('14:00'),s450:s('13:50'),pts:65},{pu:10,pl:s('1:17'),run:s('18:51'),row:s('10:55'),s500:s('15:15'),s450:s('15:05'),pts:60},{pu:8,pl:s('1:08'),run:s('19:08'),row:s('11:05'),s500:s('15:30'),s450:s('15:20'),pts:55},{pu:7,pl:s('1:00'),run:s('19:25'),row:s('11:15'),s500:s('15:45'),s450:s('15:35'),pts:50},{pu:4,pl:s('0:51'),run:s('19:43'),row:s('11:25'),s500:s('16:15'),s450:s('16:05'),pts:45}],
+    '65+': [{pu:21,pl:s('2:38'),run:s('14:45'),row:s('8:50'),s500:s('9:15'),s450:s('9:05'),pts:100},{pu:19,pl:s('2:34'),run:s('16:01'),row:s('9:00'),s500:s('10:00'),s450:s('9:50'),pts:95},{pu:17,pl:s('2:30'),run:s('16:19'),row:s('9:10'),s500:s('10:23'),s450:s('10:13'),pts:90},{pu:15,pl:s('2:22'),run:s('16:43'),row:s('9:20'),s500:s('10:52'),s450:s('10:42'),pts:85},{pu:14,pl:s('2:13'),run:s('17:07'),row:s('9:30'),s500:s('11:45'),s450:s('11:35'),pts:80},{pu:13,pl:s('2:05'),run:s('17:30'),row:s('9:40'),s500:s('11:50'),s450:s('11:40'),pts:75},{pu:12,pl:s('1:48'),run:s('18:18'),row:s('10:00'),s500:s('13:15'),s450:s('13:05'),pts:70},{pu:11,pl:s('1:32'),run:s('19:06'),row:s('10:30'),s500:s('14:15'),s450:s('14:05'),pts:65},{pu:10,pl:s('1:15'),run:s('19:54'),row:s('11:00'),s500:s('15:30'),s450:s('15:20'),pts:60},{pu:8,pl:s('1:07'),run:s('20:13'),row:s('11:10'),s500:s('15:45'),s450:s('15:35'),pts:55},{pu:7,pl:s('0:58'),run:s('20:31'),row:s('11:20'),s500:s('16:00'),s450:s('15:50'),pts:50},{pu:4,pl:s('0:50'),run:s('20:52'),row:s('11:30'),s500:s('16:30'),s450:s('16:20'),pts:45}]
+  }
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let state = { sex: 'M', age: '25-29', cardio: 'run' };
+const CARDIO_LABELS = { run:'1.5-Mile Run/Walk', row:'2000-Meter Row', swim500:'500-Yard Swim', swim450:'450-Meter Swim' };
+const CARDIO_KEY = { run:'run', row:'row', swim500:'s500', swim450:'s450' };
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'standards') renderTable();
+}
+
+// ══════════════════════════════════════════════
+// CALCULATOR
+// ══════════════════════════════════════════════
+function setSex(v, btn) {
+  state.sex = v;
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  calc();
+}
+function setCardio(v, btn) {
+  state.cardio = v;
+  document.querySelectorAll('.cardio-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cardio-label').textContent = CARDIO_LABELS[v];
+  calc();
+}
+function autoAdvance(el, nextId) {
+  if (el.value.length >= 2) document.getElementById(nextId).focus();
+}
+
+function parseTime(minId, secId) {
+  const m = parseInt(document.getElementById(minId).value, 10);
+  const sec = parseInt(document.getElementById(secId).value, 10);
+  if (isNaN(m) || isNaN(sec)) return null;
+  return m * 60 + sec;
+}
+
+function scorePU(count) {
+  if (count === null || isNaN(count)) return null;
+  const tbl = STANDARDS[state.sex][state.age];
+  for (const r of tbl) { if (count >= r.pu) return r.pts; }
+  return 0;
+}
+function scorePL(sec) {
+  if (sec === null) return null;
+  const tbl = STANDARDS[state.sex][state.age];
+  for (const r of tbl) { if (sec >= r.pl) return r.pts; }
+  return 0;
+}
+function scoreCR(sec) {
+  if (sec === null) return null;
+  const tbl = STANDARDS[state.sex][state.age];
+  const k = CARDIO_KEY[state.cardio];
+  for (const r of tbl) { if (sec <= r[k]) return r.pts; }
+  return 0;
+}
+
+function updateScoreCard(id, raw, pts) {
+  const card = document.getElementById('sc-' + id);
+  const rawEl = document.getElementById('sc-' + id + '-raw');
+  const ptsEl = document.getElementById('sc-' + id + '-pts');
+  card.className = 'score-card';
+  // clear badge
+  const existing = card.querySelector('.sc-badge');
+  if (existing) existing.remove();
+
+  if (pts === null) {
+    rawEl.textContent = '—';
+    ptsEl.textContent = 'enter';
+  } else {
+    rawEl.textContent = raw;
+    ptsEl.textContent = pts + ' pts';
+    const badge = document.createElement('span');
+    badge.className = 'sc-badge';
+    if (pts >= 45) { card.classList.add('pass'); badge.textContent = 'PASS'; }
+    else { card.classList.add('fail'); badge.textContent = 'FAIL'; }
+    card.appendChild(badge);
+  }
+}
+
+function calc() {
+  state.age = document.getElementById('age-select').value;
+  const puRaw = document.getElementById('pu-val').value;
+  const puCount = puRaw !== '' ? parseInt(puRaw, 10) : null;
+  const plSec = parseTime('pl-min','pl-sec');
+  const crSec = parseTime('cr-min','cr-sec');
+
+  const puPts = scorePU(puCount);
+  const plPts = scorePL(plSec);
+  const crPts = scoreCR(crSec);
+
+  updateScoreCard('pu', puCount !== null ? String(puCount) : '—', puPts);
+  updateScoreCard('pl', plSec !== null ? fmtSec(plSec) : '—', plPts);
+  updateScoreCard('cr', crSec !== null ? fmtSec(crSec) : '—', crPts);
+
+  const band = document.getElementById('result-band');
+  const title = document.getElementById('result-title');
+  const sub = document.getElementById('result-sub');
+  const markEl = document.getElementById('result-mark');
+  if (markEl) markEl.remove();
+
+  band.className = 'result-band';
+
+  if (puPts === null || plPts === null || crPts === null) {
+    title.textContent = 'Enter all three events';
+    sub.textContent = '';
+    return;
+  }
+
+  const failed = [];
+  if (puPts < 45) failed.push('Push-Up');
+  if (plPts < 45) failed.push('Plank');
+  if (crPts < 45) failed.push('Cardio');
+
+  const mark = document.createElement('div');
+  mark.className = 'result-mark';
+  mark.id = 'result-mark';
+
+  if (failed.length > 0) {
+    band.classList.add('r-fail');
+    title.textContent = 'PFT Failure';
+    sub.textContent = failed.join(', ') + ' below 45-pt minimum · Eval mark: ' + (4 - failed.length);
+    mark.textContent = 4 - failed.length;
+    mark.style.background = 'var(--danger)';
+  } else {
+    const avg = Math.round((puPts + plPts + crPts) / 3);
+    let cat, evalMark, cls;
+    if (avg >= 90) { cat = 'Superior'; evalMark = 7; cls = 'r-pass-superior'; }
+    else if (avg >= 75) { cat = 'Excellent'; evalMark = 6; cls = 'r-pass-excellent'; }
+    else if (avg >= 60) { cat = 'Above Average'; evalMark = 5; cls = 'r-pass-above'; }
+    else { cat = 'Average'; evalMark = 4; cls = 'r-pass-average'; }
+    band.classList.add(cls);
+    title.textContent = 'PFT Passed — ' + cat;
+    sub.textContent = 'Average: ' + avg + ' pts  ·  PU: ' + puPts + '  PL: ' + plPts + '  CR: ' + crPts;
+    mark.textContent = evalMark;
+  }
+
+  document.querySelector('.result-top').appendChild(mark);
+}
+
+function resetAll() {
+  ['pu-val','pl-min','pl-sec','cr-min','cr-sec'].forEach(id => document.getElementById(id).value = '');
+  calc();
+}
+
+// ══════════════════════════════════════════════
+// STANDARDS TABLE
+// ══════════════════════════════════════════════
+let stdSex = 'M';
+function setStdSex(v, btn) {
+  stdSex = v;
+  document.querySelectorAll('#tab-standards .seg button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+function renderTable() {
+  const age = document.getElementById('std-age').value;
+  const tbl = STANDARDS[stdSex][age];
+  const tbody = document.getElementById('std-tbody');
+  tbody.innerHTML = tbl.map(r => `
+    <tr class="${r.pts === 45 ? 'min-row' : ''}">
+      <td><strong>${r.pts}</strong></td>
+      <td>${r.pu}</td>
+      <td>${fmtSec(r.pl)}</td>
+      <td>${fmtSec(r.run)}</td>
+      <td>${fmtSec(r.row)}</td>
+      <td>${fmtSec(r.s500)}</td>
+      <td>${fmtSec(r.s450)}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// INFO ACCORDION
+// ══════════════════════════════════════════════
+const INFO_SECTIONS = [
+  { title: 'PFT Overview', items: [
+    { h: 'Three-event test', b: 'Push-Up, Forearm Plank, and one cardio event (1.5-mile run/walk, 2000-meter row, or 500-yd / 450-m swim) — all completed the same day in that order. Rest between events may not exceed 15 minutes.' },
+    { h: 'Passing standard', b: 'Each event must score at least 45 points. Failing any single event is an overall PFT failure regardless of scores on the other two.' },
+    { h: 'Frequency', b: 'Active duty and SELRES on LT-ADOS/EAD orders: semi-annually (twice per year). SELRES in drilling status: one official PFT annually.' },
+    { h: 'Scoring', b: 'Raw scores are converted to age- and sex-normed points (see Standards tab). The three event scores are averaged for an overall eval mark of 1–7.' },
+  ]},
+  { title: 'Push-Up', items: [
+    { h: 'Objective', b: 'Maximum correct repetitions within 1 minute on a flat, level surface.' },
+    { h: 'Starting position', b: 'Leaning-rest (plank) on toes and palms only. Body forms a straight line head-to-heels. Arms straight, palms under shoulders or slightly wider. Feet may not touch a wall.' },
+    { h: 'Down phase', b: 'Lower until elbows reach at least 90°, keeping head, shoulders, back, buttocks, and legs aligned throughout.' },
+    { h: 'Up phase', b: 'Return to full arm extension. Resting is permitted only in the up position while maintaining a straight body line.' },
+    { h: 'Termination', b: '1 minute elapses; any body part other than hands/feet touches the deck; a hand or foot lifts; body alignment breaks (sag or pike). "Pulsing" reps (no full elbow extension or 90° bend) are not counted.' },
+  ]},
+  { title: 'Forearm Plank', items: [
+    { h: 'Objective', b: 'Hold proper plank posture as long as possible. Max recorded: 4:00. Highest scored time: 3:24.' },
+    { h: 'Position', b: 'Face down, supported on forearms and toes only. Elbows directly under shoulders at 90°. Single straight line from head to heels — back flat, pelvis neutral, knees straight, looking straight down.' },
+    { h: 'Hands', b: 'Fists (pinky-side down) or palms flat. Interlocking or clasping hands is prohibited.' },
+    { h: 'Termination', b: 'Total time hits 4:00; any non-authorized body part touches the deck; head drops to hands; hands/forearms/feet lift off; elbow angle not maintained; more than one form correction from PRL.' },
+  ]},
+  { title: '1.5-Mile Run/Walk', items: [
+    { h: 'Objective', b: 'Cover 1.5 miles as fast as possible. Any combination of running and walking is allowed.' },
+    { h: 'Course', b: 'Flat, solid surface free of steep inclines, surface irregularities, and sharp turns. Distance verified with measuring wheel, bike odometer, or GPS.' },
+    { h: 'Treadmill', b: 'Incline set to exactly 1.0% before start; may not change. PRL stopwatch is official time — not the treadmill display. Holding or leaning on support bars ends the test.' },
+    { h: 'Failure', b: 'Not completing the full distance for any reason other than injury is recorded as 59:59 (automatic failure).' },
+  ]},
+  { title: '2000-Meter Row', items: [
+    { h: 'Objective', b: 'Row 2000 meters in the fastest possible time.' },
+    { h: 'Equipment', b: 'Concept2 Rower Model D or E with PM3/PM4/PM5 monitor, or Rogue Echo. Damper setting is member\'s choice (3–5 typical).' },
+    { h: 'Machine setup', b: 'Select Workout → Standard List → 2000m → press Display until top line shows "2000m | 0 s/m."' },
+    { h: 'Critical', b: 'Maintain continuous motion throughout. Pausing long enough for the monitor to reset results in automatic failure (recorded as 59:59).' },
+  ]},
+  { title: '500-Yard / 450-Meter Swim', items: [
+    { h: 'Objective', b: 'Swim the required distance in the fastest possible time in a standard 25- or 50-yd/m pool.' },
+    { h: 'Permitted', b: 'Any combination of swim strokes and turns. Resting by holding the side, standing in shallow water, or treading water. Push-offs from walls after each length.' },
+    { h: 'Prohibited', b: 'Fins, snorkels, wet suits, flotation gear, propulsion devices. Diving starts — members must begin already in the water.' },
+    { h: 'Safety', b: 'At least one certified lifeguard must be present. CPR-certified support personnel must also be on scene.' },
+  ]},
+  { title: 'Retest & Probation', items: [
+    { h: 'Retest option', b: 'Members who fail may request one consequence-free retest in writing within 24 hours. Retest occurs within 30 days but within the same testing window (30-day wait may be waived by CO/OiC).' },
+    { h: 'Retest outcome', b: 'The retest score becomes the official score of record. A second failure → CG-3307 (Administrative Remarks) and PFT probation.' },
+    { h: 'Probation', b: 'Consequences may include withholding advancement/promotion/frocking, assignment limitations, PCS/Reserve order impacts, and resident training restrictions.' },
+    { h: 'Separation', b: 'Administrative separation may be initiated after a third CG-3307 for PFT failure within a 48-month period.' },
+  ]},
+];
+
+function buildAccordion() {
+  const container = document.getElementById('accordion-container');
+  container.innerHTML = INFO_SECTIONS.map((sec, i) => `
+    <div class="accordion">
+      <button class="acc-header" onclick="toggleAcc(${i},this)">
+        ${sec.title}
+        <span class="acc-chevron">▼</span>
+      </button>
+      <div class="acc-body" id="acc-body-${i}">
+        ${sec.items.map(item => `
+          <div class="acc-item">
+            <div class="acc-item-heading">${item.h}</div>
+            <div class="acc-item-body">${item.b}</div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function toggleAcc(i, btn) {
+  const body = document.getElementById('acc-body-' + i);
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  btn.classList.toggle('open', !open);
+}
+
+// ══════════════════════════════════════════════
+// PWA / SERVICE WORKER
+// ══════════════════════════════════════════════
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('install-banner').style.display = 'none';
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+buildAccordion();
+renderTable();
+calc();
+</script>
+</body>
+</html>
